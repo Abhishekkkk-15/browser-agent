@@ -1,1 +1,1 @@
-export { BroswerManager } from "./browser";
+export { BrowserManager } from "./browser";

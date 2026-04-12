@@ -1,6 +1,6 @@
 import { Browser, chromium } from "playwright";
 
-export class BroswerManager {
+export class BrowserManager {
   private browser: Browser | null = null;
 
   async start(headless = true) {
@@ -14,3 +14,14 @@ export class BroswerManager {
     await this.browser?.close();
   }
 }
+
+async function run() {
+  const bm = new BrowserManager();
+  console.log("got here");
+  await bm.start(false);
+  await bm.newPage();
+  // await bm.close();
+  console.log("done");
+}
+
+run();
