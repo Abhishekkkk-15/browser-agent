@@ -1,0 +1,1 @@
+export { BroswerManager } from "./browser";
