@@ -1,9 +1,52 @@
 import { Browser, BrowserContext, chromium, Page } from "playwright";
+import { spawn } from "child_process";
+import * as path from "path";
+import * as fs from "fs";
+
+const CHROME_PATHS = [
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+  path.join(process.env.LOCALAPPDATA || "", "Google/Chrome/Application/chrome.exe"),
+];
 
 export class BrowserManager {
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
   private isExternalBrowser = false;
+
+  private async launchDebugBrowser() {
+    let chromePath = "";
+    for (const p of CHROME_PATHS) {
+      if (fs.existsSync(p)) {
+        chromePath = p;
+        break;
+      }
+    }
+
+    if (!chromePath) {
+      console.log("❌ Could not find Chrome executable automatically.");
+      return false;
+    }
+
+    const debugProfileDir = path.join(process.cwd(), ".chrome_debug_profile");
+    console.log(`🚀 Auto-launching Chrome in debug mode...`);
+    
+    const child = spawn(chromePath, [
+      "--remote-debugging-port=9222",
+      "--remote-allow-origins=*",
+      `--user-data-dir=${debugProfileDir}`,
+    ], {
+      detached: true,
+      stdio: "ignore",
+    });
+
+    child.unref();
+    
+    // Give it a few seconds to start up
+    console.log("⏳ Waiting for browser to initialize...");
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    return true;
+  }
 
   async start(headless = true, userDataDir?: string) {
     if (userDataDir) {
@@ -57,6 +100,22 @@ export class BrowserManager {
         }
         console.log(`❌ Connection to ${targetCdp} failed: ${error.message}`);
         
+        // Try to auto-launch if we are on the default port
+        if (!cdpUrl && targetCdp.includes("9222")) {
+          const launched = await this.launchDebugBrowser();
+          if (launched) {
+            try {
+              console.log(`🔌 Attempting to connect to the new browser instance...`);
+              await this.connect(targetCdp);
+              this.isExternalBrowser = true;
+              console.log("✅ Successfully connected to the auto-launched browser.");
+              return;
+            } catch (retryError: any) {
+              console.log(`❌ Second connection attempt failed: ${retryError.message}`);
+            }
+          }
+        }
+
         // Try localhost if 127.0.0.1 failed
         if (targetCdp.includes("127.0.0.1")) {
           const localhostCdp = targetCdp.replace("127.0.0.1", "localhost");

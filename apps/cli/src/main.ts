@@ -14,6 +14,27 @@ import {
 import { runScrapeToGmail } from "@browser-agent/workflows";
 import { spawn } from "child_process";
 import * as fs from "fs";
+import * as readline from "readline";
+
+const ENV_FILE = path.join(__dirname, "../../../.env");
+
+function updateEnv(key: string, value: string) {
+  let content = "";
+  if (fs.existsSync(ENV_FILE)) {
+    content = fs.readFileSync(ENV_FILE, "utf8");
+  }
+
+  const lines = content.split("\n");
+  const index = lines.findIndex(line => line.startsWith(`${key}=`));
+
+  if (index !== -1) {
+    lines[index] = `${key}=${value}`;
+  } else {
+    lines.push(`${key}=${value}`);
+  }
+
+  fs.writeFileSync(ENV_FILE, lines.join("\n"));
+}
 
 dotenv.config({ path: path.join(__dirname, "../../../.env") });
 
@@ -268,6 +289,62 @@ program
         console.log("🧹 Cleaned up stale PID file.");
       }
     }
+  });
+
+const config = program
+  .command("config")
+  .description("Manage configuration and environment variables");
+
+config
+  .command("set")
+  .description("Set a configuration variable")
+  .argument("<key>", "Configuration key")
+  .argument("<value>", "Configuration value")
+  .action((key, value) => {
+    updateEnv(key, value);
+    console.log(`✅ Set ${key}=${value}`);
+  });
+
+config
+  .command("list")
+  .description("List all configuration variables")
+  .action(() => {
+    if (!fs.existsSync(ENV_FILE)) {
+      console.log("ℹ️ No .env file found.");
+      return;
+    }
+    const content = fs.readFileSync(ENV_FILE, "utf8");
+    console.log("\n--- Current Configuration ---\n");
+    console.log(content);
+  });
+
+config
+  .command("init")
+  .description("Interactive configuration wizard")
+  .action(async () => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    const question = (query: string) => new Promise<string>(resolve => rl.question(query, resolve));
+
+    console.log("🛠️  Browser Agent Configuration Wizard\n");
+    
+    const apiKey = await question("Enter your OpenAI API Key: ");
+    if (apiKey) updateEnv("OPENAI_API_KEY", apiKey);
+
+    const baseUrl = await question("Enter OpenAI Base URL (default: https://api.openai.com/v1): ");
+    if (baseUrl) updateEnv("OPENAI_BASE_URL", baseUrl);
+
+    const model = await question("Enter OpenAI Model (default: gpt-4o): ");
+    if (model) updateEnv("OPENAI_MODEL", model);
+
+    const discordToken = await question("Enter Discord Bot Token (optional): ");
+    if (discordToken) updateEnv("DISCORD_BOT_TOKEN", discordToken);
+
+    console.log("\n✅ Configuration updated! You can now run the agent commands.");
+    rl.close();
   });
 
 program.parse(process.argv);
