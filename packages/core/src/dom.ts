@@ -9,7 +9,13 @@ export async function getSimplifiedPageStructure(page: Page) {
   return await page.evaluate(() => {
     // 1. Remove previous markers
     const oldMarkers = document.querySelectorAll('[data-agent-id]');
-    oldMarkers.forEach(el => el.removeAttribute('data-agent-id'));
+    if (oldMarkers) {
+      oldMarkers.forEach(el => el.removeAttribute('data-agent-id'));
+    }
+
+    if (!document.body) {
+      return "(Page is still loading or body is missing...)";
+    }
 
     // 2. Identify interactive elements
     const selectors = [

@@ -21,6 +21,46 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
+  apps/cli:
+    dependencies:
+      '@browser-agent/actions':
+        specifier: workspace:*
+        version: link:../../packages/actions
+      '@browser-agent/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@browser-agent/workflows':
+        specifier: workspace:*
+        version: link:../../packages/workflows
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
+      openai:
+        specifier: ^6.34.0
+        version: 6.34.0(ws@8.20.0)
+      playwright:
+        specifier: ^1.59.1
+        version: 1.59.1
+    devDependencies:
+      '@browser-agent/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@browser-agent/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.15.3
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.1
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+
   apps/docs:
     dependencies:
       '@browser-agent/ui':
@@ -117,46 +157,6 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
-  packages/agent:
-    dependencies:
-      '@browser-agent/actions':
-        specifier: workspace:*
-        version: link:../actions
-      '@browser-agent/core':
-        specifier: workspace:*
-        version: link:../core
-      '@browser-agent/workflows':
-        specifier: workspace:*
-        version: link:../workflows
-      commander:
-        specifier: ^12.1.0
-        version: 12.1.0
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.6.1
-      openai:
-        specifier: ^6.34.0
-        version: 6.34.0(ws@8.20.0)
-      playwright:
-        specifier: ^1.59.1
-        version: 1.59.1
-    devDependencies:
-      '@browser-agent/eslint-config':
-        specifier: workspace:*
-        version: link:../eslint-config
-      '@browser-agent/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/node':
-        specifier: ^22.15.3
-        version: 22.15.3
-      eslint:
-        specifier: ^9.39.1
-        version: 9.39.1
-      typescript:
-        specifier: 5.9.2
-        version: 5.9.2
-
   packages/config:
     devDependencies:
       '@browser-agent/eslint-config':
@@ -199,9 +199,9 @@ importers:
 
   packages/discord:
     dependencies:
-      '@browser-agent/agent':
+      '@browser-agent/cli':
         specifier: workspace:*
-        version: link:../agent
+        version: link:../../apps/cli
       discord.js:
         specifier: ^14.16.3
         version: 14.26.3

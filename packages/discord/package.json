@@ -10,7 +10,7 @@
   "dependencies": {
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
-    "@browser-agent/agent": "workspace:*"
+    "@browser-agent/cli": "workspace:*"
   },
   "devDependencies": {
     "@browser-agent/typescript-config": "workspace:*",

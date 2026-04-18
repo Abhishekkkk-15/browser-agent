@@ -45,7 +45,7 @@ Respond ONLY with a JSON object:
       },
     ];
 
-    while (step < 10) {
+    while (step < 20) {
       step++;
 
       console.log(`\n--- Step ${step} ---`);
@@ -107,23 +107,29 @@ Respond ONLY with a JSON object:
   }
 
   private async executeAction(page: Page, action: string, params: any) {
-    switch (action) {
-      case "goto":
-        await page.goto(params.url, { waitUntil: "domcontentloaded" });
-        // Small wait after navigation to let basic JS run
-        await page.waitForTimeout(1000);
-        break;
-      case "click":
-        await clickElement(page, `[data-agent-id='${params.id}']`);
-        break;
-      case "fill":
-        await fillElement(page, `[data-agent-id='${params.id}']`, params.value);
-        break;
-      case "wait":
-        await page.waitForTimeout(params.ms || 1000);
-        break;
-      default:
-        throw new Error(`Unknown action: ${action}`);
+    try {
+      switch (action) {
+        case "goto":
+          await page.goto(params.url, { waitUntil: "domcontentloaded" });
+          break;
+        case "click":
+          await clickElement(page, `[data-agent-id='${params.id}']`);
+          break;
+        case "fill":
+          await fillElement(page, `[data-agent-id='${params.id}']`, params.value);
+          break;
+        case "wait":
+          await page.waitForTimeout(params.ms || 1000);
+          break;
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
+
+      // Stability: Wait for the page to be in a reasonable state after any action
+      await page.waitForLoadState("domcontentloaded", { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(1000); // Small grace period for rapid JS changes
+    } catch (e: any) {
+      throw new Error(`Action execution failed: ${e.message}`);
     }
   }
 }
