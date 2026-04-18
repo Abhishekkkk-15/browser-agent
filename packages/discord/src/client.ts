@@ -1,7 +1,7 @@
 import { Client, GatewayIntentBits, Message } from "discord.js";
 import * as dotenv from "dotenv";
 import * as path from "path";
-import { AutonomousAgent } from "@browser-agent/cli";
+import { AutonomousAgent } from "@browser-agent/core";
 import { BrowserManager } from "@browser-agent/core";
 
 dotenv.config({ path: path.join(__dirname, "../../../.env") });

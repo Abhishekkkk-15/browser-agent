@@ -1,0 +1,12 @@
+
+> browser-agent@ discord G:\Web_Develpoment\main_Projects\browser-agent
+> pnpm --filter @browser-agent/discord run dev
+
+
+> @browser-agent/discord@0.0.0 dev G:\Web_Develpoment\main_Projects\browser-agent\packages\discord
+> tsx src/client.ts
+
+Logado como clibot#3860!
+(node:13784) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ELIFECYCLE  Command failed with exit code 1.

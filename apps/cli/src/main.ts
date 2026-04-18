@@ -2,7 +2,7 @@
 import { Command } from "commander";
 import * as dotenv from "dotenv";
 import * as path from "path";
-import { BrowserManager } from "@browser-agent/core";
+import { BrowserManager, AutonomousAgent } from "@browser-agent/core";
 import {
   scrapeAllContent,
   composeAndSendEmail,
@@ -12,7 +12,8 @@ import {
   takeScreenshot,
 } from "@browser-agent/actions";
 import { runScrapeToGmail } from "@browser-agent/workflows";
-import { AutonomousAgent } from "./autonomous";
+import { spawn } from "child_process";
+import * as fs from "fs";
 
 dotenv.config({ path: path.join(__dirname, "../../../.env") });
 
@@ -192,6 +193,81 @@ program
     console.log("3. Run 'launch_chrome_debug.bat' again after all processes are killed.");
     console.log("4. If the issue persists, try running this command in PowerShell as Admin: taskkill /F /IM chrome.exe /T");
     console.log("5. Run this 'doctor' command again.");
+  });
+
+const PID_FILE = path.join(process.cwd(), ".discord-bot.pid");
+const LOG_FILE = path.join(process.cwd(), "discord-bot.log");
+
+program
+  .command("discord")
+  .description("Start the Discord bot as a background service")
+  .option("--foreground", "Run in the foreground instead of background", false)
+  .action(async (options) => {
+    if (fs.existsSync(PID_FILE)) {
+      console.log("⚠️ Discord bot is already running (or .discord-bot.pid exists).");
+      console.log("If you are sure it is not running, delete .discord-bot.pid");
+      return;
+    }
+
+    console.log("🚀 Starting Discord bot...");
+
+    if (options.foreground) {
+      // Run it in this process
+      // We need to import DiscordBot dynamically to avoid issues
+      const { DiscordBot } = await import("@browser-agent/discord");
+      const bot = new DiscordBot();
+      await bot.start();
+    } else {
+      // Background mode
+      const out = fs.openSync(LOG_FILE, "a");
+      const err = fs.openSync(LOG_FILE, "a");
+
+      // Use pnpm -w to run the bot using the workspace root script
+      const child = spawn("pnpm", ["-w", "run", "discord"], {
+        detached: true,
+        stdio: ["ignore", out, err],
+        windowsHide: true,
+      });
+
+      child.unref();
+
+      if (child.pid) {
+        fs.writeFileSync(PID_FILE, child.pid.toString());
+        console.log(`✅ Discord bot started in background (PID: ${child.pid})`);
+        console.log(`📝 Logs available at: ${LOG_FILE}`);
+      } else {
+        console.error("❌ Failed to start Discord bot.");
+      }
+    }
+  });
+
+program
+  .command("discord-stop")
+  .description("Stop the background Discord bot service")
+  .action(() => {
+    if (!fs.existsSync(PID_FILE)) {
+      console.log("ℹ️ No background Discord bot detected (.discord-bot.pid not found).");
+      return;
+    }
+
+    const pid = parseInt(fs.readFileSync(PID_FILE, "utf8"));
+    try {
+      if (process.platform === "win32") {
+        // More reliable way to kill process tree on Windows
+        spawn("taskkill", ["/F", "/T", "/PID", pid.toString()]);
+      } else {
+        process.kill(pid, "SIGTERM");
+      }
+      fs.unlinkSync(PID_FILE);
+      console.log(`✅ Discord bot (PID: ${pid}) stop signal sent.`);
+    } catch (e: any) {
+      console.error(`❌ Failed to stop Discord bot: ${e.message}`);
+      // Clean up PID file anyway if process is gone
+      if (e.code === "ESRCH") {
+        fs.unlinkSync(PID_FILE);
+        console.log("🧹 Cleaned up stale PID file.");
+      }
+    }
   });
 
 program.parse(process.argv);

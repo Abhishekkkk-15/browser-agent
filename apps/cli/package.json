@@ -21,6 +21,7 @@
     "@browser-agent/workflows": "workspace:*",
     "commander": "^12.1.0",
     "dotenv": "^16.4.7",
+    "@browser-agent/discord": "workspace:*",
     "openai": "^6.34.0",
     "playwright": "^1.59.1"
   },

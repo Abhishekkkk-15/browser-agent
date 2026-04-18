@@ -29,6 +29,9 @@ importers:
       '@browser-agent/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@browser-agent/discord':
+        specifier: workspace:*
+        version: link:../../packages/discord
       '@browser-agent/workflows':
         specifier: workspace:*
         version: link:../../packages/workflows
@@ -177,6 +180,9 @@ importers:
 
   packages/core:
     dependencies:
+      openai:
+        specifier: ^6.34.0
+        version: 6.34.0(ws@8.20.0)
       playwright:
         specifier: ^1.59.1
         version: 1.59.1
@@ -199,9 +205,9 @@ importers:
 
   packages/discord:
     dependencies:
-      '@browser-agent/cli':
+      '@browser-agent/core':
         specifier: workspace:*
-        version: link:../../apps/cli
+        version: link:../core
       discord.js:
         specifier: ^14.16.3
         version: 14.26.3
