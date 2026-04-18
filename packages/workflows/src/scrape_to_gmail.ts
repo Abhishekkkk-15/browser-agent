@@ -14,7 +14,11 @@ export async function runScrapeToGmail(options: ScrapeToGmailOptions) {
   
   try {
     // 1. Start Browser
-    await browserManager.start(options.headless ?? false, options.userDataDir);
+    await browserManager.setupSmartConnection({
+      autoConnect: process.env.AUTO_CONNECT !== "false",
+      headless: options.headless ?? false,
+      userDataDir: options.userDataDir,
+    });
     const page = await browserManager.newPage();
 
     // 2. Scrape Source

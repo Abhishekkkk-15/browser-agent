@@ -25,19 +25,17 @@ program
 
 async function setupBrowser(options: any) {
   const browserManager = new BrowserManager();
-  const cdpUrl = process.env.EXISTING_BROWSER_URL || options.cdp;
+  const autoConnect = process.env.AUTO_CONNECT !== "false";
+  const headless = options.headless || process.env.HEADLESS === "true";
+  const userDataDir =
+    options.persist ? path.join(process.cwd(), ".user_data") : undefined;
 
-  if (cdpUrl) {
-    console.log(`🔌 Connecting to existing browser at ${cdpUrl}...`);
-    await browserManager.connect(cdpUrl);
-  } else {
-    // Default to headed (visible) unless --headless or HEADLESS=true is set
-    const headless = options.headless || process.env.HEADLESS === "true";
-    console.log(`🚀 Launching new browser (headless: ${headless})...`);
-    const userDataDir =
-      options.persist ? path.join(process.cwd(), ".user_data") : undefined;
-    await browserManager.start(headless, userDataDir);
-  }
+  await browserManager.setupSmartConnection({
+    cdpUrl: process.env.EXISTING_BROWSER_URL || options.cdp,
+    autoConnect,
+    headless,
+    userDataDir,
+  });
 
   return browserManager;
 }
@@ -61,7 +59,7 @@ program
           (content.length > 1000 ? "\n... (truncated)" : "")
       );
     } finally {
-      if (!options.cdp) await bm.close();
+      await bm.close();
     }
   });
 
@@ -84,7 +82,7 @@ program
         body: options.body,
       });
     } finally {
-      if (!options.cdp) await bm.close();
+      await bm.close();
     }
   });
 
@@ -106,7 +104,7 @@ program
         process.stdin.once("data", () => resolve());
       });
     } finally {
-      if (!options.cdp) await bm.close();
+      await bm.close();
     }
   });
 
@@ -133,7 +131,7 @@ program
         headless: options.headless || process.env.HEADLESS === "true",
       });
     } finally {
-      if (!options.cdp) await bm.close();
+      await bm.close();
     }
   });
 
@@ -153,8 +151,47 @@ program
       const result = await agent.run(page, goal);
       console.log("\n✅ Task Complete Result:\n", result);
     } finally {
-      if (!options.cdp) await bm.close();
+      await bm.close();
     }
+  });
+
+program
+  .command("doctor")
+  .description("Diagnose browser connection issues")
+  .action(async () => {
+    console.log("👨‍⚕️ Browser Agent Doctor - Diagnostic Report\n");
+
+    const ports = [9222];
+    const hosts = ["127.0.0.1", "localhost"];
+
+    for (const host of hosts) {
+      for (const port of ports) {
+        const url = `http://${host}:${port}/json/version`;
+        console.log(`🔍 Checking ${url}...`);
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ FOUND: Browser is listening on ${host}:${port}`);
+            console.log(`📦 Version: ${data.Browser}`);
+            console.log(`🌐 WebSocker URL: ${data.webSocketDebuggerUrl}`);
+            console.log("\n🎉 Connection test passed! Your agent should be able to connect.");
+            return;
+          }
+        } catch (e: any) {
+          console.log(`❌ Failed: ${e.message}`);
+        }
+      }
+    }
+
+    console.log("\n🛑 DIAGNOSIS: Connection Refused");
+    console.log("The agent cannot find your running Chrome instance.");
+    console.log("\nFIX STEPS:");
+    console.log("1. Close ALL Chrome windows. Check your Task Manager for hidden 'chrome.exe' processes.");
+    console.log("2. Open your System Tray (bottom right) and exit any Chrome icons there.");
+    console.log("3. Run 'launch_chrome_debug.bat' again after all processes are killed.");
+    console.log("4. If the issue persists, try running this command in PowerShell as Admin: taskkill /F /IM chrome.exe /T");
+    console.log("5. Run this 'doctor' command again.");
   });
 
 program.parse(process.argv);

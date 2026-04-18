@@ -40,15 +40,11 @@ export class DiscordBot {
       await message.reply("🤖 Submitting task to agent: " + goal);
 
       try {
-        const cdpUrl = process.env.EXISTING_BROWSER_URL;
-        if (cdpUrl) {
-          await this.browserManager.connect(cdpUrl);
-        } else {
-          // Default to headed (visible) unless HEADLESS=true is set
-          const isHeadless = process.env.HEADLESS === "true";
-          console.log(`🚀 Launching browser (headless: ${isHeadless})...`);
-          await this.browserManager.start(isHeadless); 
-        }
+        await this.browserManager.setupSmartConnection({
+          cdpUrl: process.env.EXISTING_BROWSER_URL,
+          autoConnect: process.env.AUTO_CONNECT !== "false",
+          headless: process.env.HEADLESS === "true",
+        });
 
         const page = await this.browserManager.getFirstPage();
         const result = await this.agent.run(page, goal);
@@ -58,7 +54,7 @@ export class DiscordBot {
         console.error(error);
         await message.reply("❌ Error: " + error.message);
       } finally {
-        // We don't necessarily want to close the browser if it's external
+        await this.browserManager.close();
       }
     });
 
