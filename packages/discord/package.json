@@ -1,0 +1,20 @@
+{
+  "name": "@browser-agent/discord",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/client.ts",
+  "scripts": {
+    "dev": "tsx src/client.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "@browser-agent/agent": "workspace:*"
+  },
+  "devDependencies": {
+    "@browser-agent/typescript-config": "workspace:*",
+    "tsx": "^4.19.3",
+    "typescript": "5.9.2"
+  }
+}
